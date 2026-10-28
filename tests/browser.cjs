@@ -1,3 +1,4 @@
+require('../build-config.js');
 // Run with PLAYWRIGHT_PATH set to an installed Playwright package; local server must be running.
 const {chromium}=require(process.env.PLAYWRIGHT_PATH||'playwright');
 const assert=require('node:assert/strict');
@@ -32,8 +33,10 @@ const assert=require('node:assert/strict');
  await page.getByRole('button',{name:'Diary',exact:true}).click();
  await page.setViewportSize({width:1280,height:900});await page.screenshot({path:'tests/diary-desktop.png',fullPage:true});
  // Independent legacy migration context.
- const legacy=await browser.newContext();await legacy.addInitScript(()=>{if(!localStorage.getItem('calorieiq-v2'))localStorage.setItem('calorieiq-v1',JSON.stringify({logs:{'2026-10-28':[{name:'Old food',servings:2,cal:200,pro:20,carb:4,fat:8}]},goals:{'2026-10-28':1800}}))});const lp=await legacy.newPage();await lp.goto('http://127.0.0.1:4173');await lp.waitForFunction(()=>localStorage.getItem('calorieiq-v2'));assert.equal(await lp.evaluate(()=>JSON.parse(localStorage.getItem('calorieiq-v2')).profiles[0].logs['2026-10-28'][0].cal),100);await legacy.close();
+ const legacy=await browser.newContext({serviceWorkers:'block'});await legacy.route('**/build-config.js',route=>route.fulfill({contentType:'application/javascript',body:'globalThis.CALORIEIQ_BUILD='+JSON.stringify({...globalThis.CALORIEIQ_BUILD,development:false})}));await legacy.addInitScript(()=>{if(!localStorage.getItem('calorieiq-v2'))localStorage.setItem('calorieiq-v1',JSON.stringify({logs:{'2026-10-28':[{name:'Old food',servings:2,cal:200,pro:20,carb:4,fat:8}]},goals:{'2026-10-28':1800}}))});const lp=await legacy.newPage();await lp.goto('http://127.0.0.1:4173');await lp.waitForFunction(()=>localStorage.getItem('calorieiq-v2'));assert.equal(await lp.evaluate(()=>JSON.parse(localStorage.getItem('calorieiq-v2')).profiles[0].logs['2026-10-28'][0].cal),100);await legacy.close();
  assert.deepEqual(errors,[]);console.log('Browser checks passed: diary, edit/delete/undo, XSS rendering, goals, recipes, meals, profiles, weight, invalid restore, export, mocked lookup, legacy migration, offline shell/scanner, mobile overflow.');
  await require('./reliability.cjs')(browser);
+ await require('./servings.cjs')(browser);
+ await require('./update.cjs')(browser);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

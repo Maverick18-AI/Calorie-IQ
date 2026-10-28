@@ -3,6 +3,11 @@
 A free, local-first calorie and macro diary for iPhone and desktop. No account,
 subscription, advertisements, or paid backend.
 
+**Development mode is enabled.** Each new ID/generation in `build-config.js`
+clears CalorieIQ test data once. Reopening the same version keeps new entries.
+Set `development:false` before production. See [SERVING-UPDATE.md](SERVING-UPDATE.md)
+for serving-size rules, real API findings, and reset details.
+
 ## Features
 
 - Daily diary with meal groups, edit, duplicate, delete/Undo and previous-day copy

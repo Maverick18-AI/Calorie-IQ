@@ -1,3 +1,5 @@
+require('../build-config.js');
+const activeBuild=globalThis.CALORIEIQ_BUILD;
 const assert = require('node:assert/strict');
 
 // Runs in isolated browser contexts. No production API or personal profile is used.
@@ -10,14 +12,15 @@ module.exports = async function reliability(browser) {
     const context = await browser.newContext({viewport: {width: 390, height: 844}});
     try {
       await context.route('https://world.openfoodfacts.org/**', route => route.abort());
-      await context.addInitScript(({unsupported}) => {
+      await context.addInitScript(({unsupported,activeBuild}) => {
         if (unsupported) Object.defineProperty(navigator, 'locks', {value: undefined});
         // Fixed profile IDs make recovery assertions independent of UUID randomness.
         if (!unsupported && !localStorage.getItem('calorieiq-v2')) {
+          localStorage.setItem('calorieiq-development-build',JSON.stringify(activeBuild));
           const profile = (id, name) => ({id, name, goals: {cal: 2200, pro: 120, carb: 250, fat: 70}, dayGoals: {}, logs: {}, foods: [], recipes: [], meals: [], weights: []});
           localStorage.setItem('calorieiq-v2', JSON.stringify({version: 2, revision: 0, active: 'me', profiles: [profile('me','Me'), profile('family','Family')], cache: [], lastBackup: null}));
         }
-      }, {unsupported});
+      }, {unsupported,activeBuild});
       const errors = [], decisions = [], dialogs = [];
       function instrument(page) {
         page.on('pageerror', error => errors.push(error.message));
