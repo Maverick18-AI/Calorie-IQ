@@ -1,5 +1,9 @@
 CALORIEIQ — Free iPhone calorie tracker
 
+VERSION 2: See README.md and DEVELOPMENT.md for current features, local setup,
+validation results and pending physical iPhone checks. The original prototype
+notes below describe version 1. No deployment has been performed for version 2.
+
 DEPLOY FREE:
 1. Extract this ZIP on a computer.
 2. Upload the extracted files to the root of your CalorieIQ GitHub repository.

@@ -1,0 +1,69 @@
+# CalorieIQ 2.0 implementation and validation
+
+All six roadmap areas have local implementations. Nothing is deployed automatically.
+
+## Verified in this workspace
+
+- 14 passing Node core tests: conversions, migration, malformed/nested imports, unknown nutrition, recipe/history snapshots, failed writes, stale revisions, profiles and backup round trips.
+- Passing Microsoft Edge browser checks at a 390px mobile viewport and desktop: logging, edit/delete/Undo, safe rendering, goals, recipes, meal creation, profiles, weight, invalid restore, valid restore/recovery, export, mocked barcode lookup, migration, offline shell and scanner availability, and mobile horizontal overflow.
+- Real bundled ZXing empty-frame handling and simulated camera start/stop and pending-permission cancellation. These simulations do not establish physical camera recognition performance.
+- JavaScript syntax checks and Git whitespace check. Screenshots inspected for mobile/desktop layout.
+- No production API requests, iPhone hardware tests, existing hosted-installation update test, Git commits, pushes or deployments performed.
+
+## Architecture
+
+- `core.js`: versioned data schema, full backup validation, legacy migration, nutrition conversions, recipe snapshots, revision-checked writes.
+- `app.js`: safe DOM rendering, diary/library/profile interactions, API access, backup and update UI.
+- `scanner.js`: cancellable camera sessions, native detection with ZXing fallback, photos, supported torch/zoom, cleanup on background/exit.
+- `styles.css`: responsive light/dark design, touch targets, safe-area spacing.
+- `sw.js`: complete versioned offline shell, including the locally bundled scanner.
+
+Records use stable IDs. Diary records carry per-base nutrition, quantity, unit, meal and source. Unknown nutrients are `null`; totals show an asterisk when incomplete. Recipe ingredients and logged foods are snapshots so future edits cannot rewrite historical totals.
+
+## Local development
+
+Requires Node 20+; no build or package installation is needed for the app:
+
+```
+npm start
+npm test
+```
+
+Open http://127.0.0.1:4173. Camera access on a physical phone requires HTTPS; phone access to an ordinary HTTP LAN address is not sufficient.
+
+For optional browser verification, install Playwright separately, set `PLAYWRIGHT_PATH` to the package path, then run `node tests/browser.cjs` while the preview server is running. This test uses installed Microsoft Edge and does not require production food-service requests. Mocked data verifies parsing, not service availability.
+
+## Storage and migration
+
+Version 1 logs migrate once into `calorieiq-v2`, preserving totals, dates and daily calorie goals. Original `calorieiq-v1` data is retained. Never clear browser data to update the app.
+
+Import accepts validated legacy and version 2 JSON, with a 10 MB limit. The complete candidate is validated before any replacement. Current data is stored as `calorieiq-recovery-v2` before restore. Failed candidate writes leave the current database unchanged. An unreadable startup database blocks saving and can be downloaded for recovery.
+
+The app deliberately retains localStorage for this release to keep migration small. Writes are synchronous and revision checked; another tab's storage event blocks edits until reload. This is not an atomic cross-tab transaction: simultaneous writes at exactly the same instant remain a limitation. A later IndexedDB storage layer can address this without changing the domain schema. Browser eviction and device loss still require external backups. Recovery snapshots are local and are not a substitute for exports.
+
+Family profiles are local organizational separation, not authentication or synchronization. Recipe drafts are held in memory and are discarded on reload; save recipes before updating. The chart table provides exact nutrition values and weight entries provide exact weigh-ins. Gaps in calorie data are omitted from charts rather than assumed to be zero.
+
+## Release procedure (not performed)
+
+1. Export existing user data and run the core/browser tests.
+2. Increment the cache name in `sw.js` whenever changing shipped assets. HTML and modules must be cached together.
+3. Verify the previous installed service worker updates to a waiting worker, old data migrates, update activation works, and reload uses one coherent asset version.
+4. Deploy the complete root folder, including icons and vendor assets, only after authorization. Do not deploy tests or local tools if using a packaging workflow.
+5. Test offline reload and export/restore on the deployed HTTPS origin.
+
+## Physical iPhone acceptance checklist — still pending
+
+- Safari and Home Screen app on older/newer iPhones; normal and larger text; VoiceOver; dark mode and landscape.
+- Camera permission allow/deny; repeated start/stop while permission is pending; lock/unlock, background/return and interrupted tracks.
+- UPC-A, UPC-E, EAN-8 and EAN-13; glare, dim light, curved packaging; photo decoding; supported torch/zoom controls.
+- Record recognition success and time to recognition; verify camera indicator turns off on Stop and navigation.
+- Online name search and barcode lookup, service throttling, timeout, unknown product and incomplete nutrition. Confirm current Open Food Facts response shape, CORS and regional availability.
+- Real package serving values for solids and liquids. Standardized OFF `_100g` values can describe liquids; the UI asks users to verify g/ml against the label rather than guessing volume from arbitrary package text.
+- Native iOS backup download/Files restore and migration from an existing installation.
+- Existing-installation service-worker update, offline restart, family profile isolation and backup round trip.
+
+## Service use
+
+Open Food Facts calls happen only on explicit search/lookup. Name search uses the full-text CGI endpoint; barcode lookup uses API v3. Local limits are conservative per running tab, not globally coordinated across devices/IPs. No API key is embedded. Complete Open Food Facts app registration/usage identification before a public release, using the project owner's contact details. No registration or message has been submitted on the owner's behalf.
+
+No subscription, advertisements, analytics, account service, or paid backend was added.
