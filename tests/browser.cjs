@@ -34,5 +34,6 @@ const assert=require('node:assert/strict');
  // Independent legacy migration context.
  const legacy=await browser.newContext();await legacy.addInitScript(()=>{if(!localStorage.getItem('calorieiq-v2'))localStorage.setItem('calorieiq-v1',JSON.stringify({logs:{'2026-10-28':[{name:'Old food',servings:2,cal:200,pro:20,carb:4,fat:8}]},goals:{'2026-10-28':1800}}))});const lp=await legacy.newPage();await lp.goto('http://127.0.0.1:4173');await lp.waitForFunction(()=>localStorage.getItem('calorieiq-v2'));assert.equal(await lp.evaluate(()=>JSON.parse(localStorage.getItem('calorieiq-v2')).profiles[0].logs['2026-10-28'][0].cal),100);await legacy.close();
  assert.deepEqual(errors,[]);console.log('Browser checks passed: diary, edit/delete/undo, XSS rendering, goals, recipes, meals, profiles, weight, invalid restore, export, mocked lookup, legacy migration, offline shell/scanner, mobile overflow.');
+ await require('./reliability.cjs')(browser);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

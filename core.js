@@ -20,6 +20,14 @@ export function validate(db){
  for(const [d,g] of Object.entries(p.dayGoals))if(!dateOK(d)||!goalsOK(g))fail();
  for(const key of ['foods','recipes','meals','weights'])if(!Array.isArray(p[key])||p[key].length>10000)fail();
  if(!p.foods.every(foodOK)||!p.recipes.every(r=>foodOK(r)&&Array.isArray(r.ingredients)&&r.ingredients.every(entryOK)&&num(r.yield,.001))||!p.meals.every(m=>obj(m)&&text(m.id)&&text(m.name)&&Array.isArray(m.entries)&&m.entries.length>0&&m.entries.every(entryOK))||!p.weights.every(w=>obj(w)&&dateOK(w.date)&&num(w.kg,.1,1000)))fail();
+ for(const r of p.recipes){
+  if(r.unit!=='serving'||!r.ingredients.length)throw Error('Invalid recipe: servings and ingredients are required. No data was replaced.');
+  const calculated=totals(r.ingredients);
+  for(const k of nutrients){
+   const expected=calculated.unknown[k]?null:calculated[k]/r.yield*r.base;
+   if(expected===null?r[k]!==null:r[k]===null||Math.abs(r[k]-expected)>1e-8*Math.max(1,Math.abs(expected)))throw Error('Inconsistent recipe nutrition: '+r.name+'. Correct its library values in the backup before importing. Diary history was not changed.');
+  }
+ }
  for(const collection of [p.foods,p.recipes,p.meals])if(new Set(collection.map(x=>x.id)).size!==collection.length)fail();
  if(new Set(p.weights.map(w=>w.date)).size!==p.weights.length)fail();
  }if(!ids.has(db.active)||!db.cache.every(foodOK))fail();return structuredClone(db);
@@ -30,7 +38,18 @@ export function migrate(v){if(v?.version===2)return validate(v);if(!obj(v)||!obj
 }
 export function totals(entries){const r={cal:0,pro:0,carb:0,fat:0,unknown:{cal:0,pro:0,carb:0,fat:0}};for(const e of entries)for(const k of nutrients){if(e[k]===null)r.unknown[k]++;else r[k]+=e[k]*e.quantity/e.base}return r}
 export function recipe(name,ingredients,yieldCount){if(!ingredients.length||!num(yieldCount,.001))throw Error('Add ingredients and a positive recipe yield.');const t=totals(ingredients),r={id:uid(),name,basis:'1 recipe serving',base:1,unit:'serving',source:'Recipe',barcode:'',ingredients:structuredClone(ingredients),yield:yieldCount};for(const k of nutrients)r[k]=t.unknown[k]?null:t[k]/yieldCount;return r}
-export function productFood(p){const n=p.nutriments||{},has=k=>n[k]!==undefined&&n[k]!==null&&n[k]!==''&&Number.isFinite(Number(n[k]))&&Number(n[k])>=0;const standardized=has('energy-kcal_100g')||has('energy_100g');const suffix=standardized?'_100g':'_serving';const liquid=p.nutrition_data_per==='100ml';const f={id:uid(),name:(p.product_name||p.product_name_en||'Unnamed product').slice(0,300),basis:standardized?(liquid?'100 ml':'100 g'):(p.serving_size||'Listed serving — verify size').slice(0,300),base:standardized?100:1,unit:standardized?(liquid?'ml':'g'):'serving',source:'Open Food Facts',barcode:/^\d{8,14}$/.test(p.code||'')?p.code:''};
+export function productFood(p){const n=p.nutriments||{},has=k=>n[k]!==undefined&&n[k]!==null&&n[k]!==''&&Number.isFinite(Number(n[k]))&&Number(n[k])>=0;
+ const declared=String(p.nutrition_data_per||'').toLowerCase().replace(/\s/g,'');
+ const hasBasis=suffix=>['energy-kcal','energy','proteins','carbohydrates','fat'].some(k=>has(k+suffix));
+ // _100g is also used by OFF for per-100ml values. Package/serving volume
+ // does not establish the basis of these nutrients; never infer density.
+ const standardized=hasBasis('_100g')&&!(declared==='serving'&&hasBasis('_serving'));
+ const suffix=standardized?'_100g':'_serving';
+ const ambiguous=standardized&&!['100g','100ml'].includes(declared);
+ const liquid=declared==='100ml';
+ const f={id:uid(),name:(p.product_name||p.product_name_en||'Unnamed product').slice(0,300),basis:standardized?(ambiguous?'100 g or 100 ml — confirm label':liquid?'100 ml':'100 g'):(p.serving_size||'Listed serving — verify size').slice(0,300),base:standardized?100:1,unit:standardized?(liquid?'ml':'g'):'serving',source:'Open Food Facts',barcode:/^\d{8,14}$/.test(p.code||'')?p.code:'',requiresUnitConfirmation:ambiguous};
  for(const [k,nk]of Object.entries({cal:'energy-kcal',pro:'proteins',carb:'carbohydrates',fat:'fat'}))f[k]=has(nk+suffix)?Number(n[nk+suffix]):null;if(f.cal===null&&has('energy'+suffix))f.cal=Number(n['energy'+suffix])/4.184;return f;
 }
-export function commit(storage,next,expected){const candidate=validate(next),current=storage.getItem(KEY);if(current&&JSON.parse(current).revision!==expected)throw Error('Another tab changed your data. Reload before saving.');candidate.revision=expected+1;storage.setItem(KEY,JSON.stringify(candidate));return candidate}
+export function commit(storage,next,expected,expectedRaw){const candidate=validate(next),current=storage.getItem(KEY);if((expectedRaw!==undefined&&current!==expectedRaw)||!current||JSON.parse(current).revision!==expected)throw Error('Stored data changed. Download your drafts, then reload before saving.');candidate.revision=expected+1;storage.setItem(KEY,JSON.stringify(candidate));return candidate}
+
+export function convertWeight(value,from,to){if(!['kg','lb'].includes(from)||!['kg','lb'].includes(to)||!Number.isFinite(value))throw Error('Invalid weight or unit.');return from===to?value:from==='kg'?value*2.2046226218:value/2.2046226218}
