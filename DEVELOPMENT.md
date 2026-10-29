@@ -1,6 +1,6 @@
 # CalorieIQ development notes
 
-Current local candidate: **2.6.0-dev.1**, generation **7**. See [V2.6-RELEASE.md](V2.6-RELEASE.md) for current features, verification and limitations. The original implementation notes below are historical.
+Current release candidate: **2.6.0-dev.2**, generation **8**, `resetData:false` (preserves data and drafts). See [V2.6-SEARCH-RELEASE.md](V2.6-SEARCH-RELEASE.md) for current features, verification and limitations. The original implementation notes below are historical.
 
 ## Original 2.0 checkpoint
 
@@ -51,9 +51,9 @@ See RELIABILITY.md for the six-issue reliability work, compatibility policy and 
 
 ## Release procedure (current)
 
-1. Run all Node and browser suites. Development test data resets once per new build.
+1. Run all Node and browser suites. Keep `resetData:false` to preserve diary data and drafts; a destructive development reset needs explicit approval.
 2. Advance BOTH build ID and generation in `build-config.js`. The service-worker cache name derives from the build ID. Add every new browser module to its shell assets.
-3. Verify the previous installed service worker updates to a waiting worker, development reset happens exactly once (or production data persists), activation works, and reload uses one coherent asset version.
+3. Verify the previous installed service worker updates, preserves diary and drafts with `resetData:false` (or production mode), activates correctly, and reload uses one coherent asset version. Test reset-once behavior separately only with disposable fixtures.
 4. Deploy the complete root folder, including icons and vendor assets, only after authorization. Do not deploy tests or local tools if using a packaging workflow.
 5. Test offline reload and export/restore on the deployed HTTPS origin.
 

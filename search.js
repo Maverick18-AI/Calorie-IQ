@@ -1,23 +1,37 @@
 export function normalizeBarcode(value){const s=String(value||'').replace(/[\s-]/g,'');return /^\d{12,14}$/.test(s)?s.padStart(14,'0'):/^\d{8,11}$/.test(s)?'short:'+s:null}
 export function barcodeMatch(a,b){const x=normalizeBarcode(a);return x!==null&&x===normalizeBarcode(b)}
 export function localBarcode(foods,code){return [...foods].reverse().find(f=>barcodeMatch(f.barcode,code))}
-export function searchWords(value){return String(value).normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/yoghurt/g,'yogurt').replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean).map(w=>w==='potatoes'?'potato':w.length>3&&w.endsWith('s')&&!w.endsWith('ss')?w.slice(0,-1):w)}
-export function relevance(query,food){const terms=searchWords(query),words=searchWords(food.name+' '+(food.brand||''));if(!terms.length)return -Infinity;if(!terms.every(t=>words.some(w=>w===t||w.startsWith(t)&&t.length>=3)))return -Infinity;const phrase=words.join(' '),needle=terms.join(' ');let score=100+terms.length*12-Math.max(0,words.length-terms.length)*2;if(phrase===needle)score+=80;else if(phrase.startsWith(needle))score+=30;else if(phrase.includes(needle))score+=15;score+=food.provenance?.dataset==='foundation'?12:food.provenance?.dataset==='fndds'?3:0;return score}
-export function rankFoods(query,foods){return foods.map((food,i)=>({food,i,score:relevance(query,food)})).filter(r=>Number.isFinite(r.score)).sort((a,b)=>b.score-a.score||a.i-b.i).map(r=>r.food)}
-export function combineResults(query,{saved=[],usda=[],off=[]}){
- const result=[],seen=new Set(),savedCodes=new Set(saved.map(f=>normalizeBarcode(f.barcode)).filter(Boolean));
- for(const [kind,list]of [['saved',saved],['usda',usda],['off',off]])for(const f of rankFoods(query,list)){
+const documents=new WeakMap();
+const preparation=new Set(['raw','cooked','uncooked','fried','grilled','baked','boiled','roasted','steamed','skin','skinon','skinless','boneless','salted','unsalted','sweetened','unsweetened','nonfat','lowfat','fatfree','fat','whole','dry','dried','powder','liquid']);
+export function searchWords(value){return String(value??'').normalize('NFKD').replace(/[\u0300-\u036f]/g,'').toLowerCase().replace(/['’]/g,'').replace(/yoghurt/g,'yogurt').replace(/\bfat[ -]+free\b/g,'fatfree').replace(/\blow[ -]+fat\b/g,'lowfat').replace(/\bnon[ -]+fat\b/g,'nonfat').replace(/\bskin[ -]+on\b/g,'skinon').replace(/[^a-z0-9]+/g,' ').trim().split(/\s+/).filter(Boolean).map(w=>({potatoes:'potato',tomatoes:'tomato',fries:'fry',berries:'berry'}[w]||(w.length>3&&w.endsWith('s')&&!w.endsWith('ss')?w.slice(0,-1):w)))}
+export function validateSearchQuery(value){if(typeof value!=='string'||/[\u0000-\u001f\u007f]/.test(value))throw Error('Enter a food name using plain text.');const query=value.trim().replace(/\s+/g,' ');if(query.length<2||query.length>100||searchWords(query).length>16)throw Error('Enter a food name between 2 and 100 characters (up to 16 words).');return query}
+function documentFor(food){const name=food.name,brand=food.brand||'';let d=documents.get(food);if(!d||d.name!==name||d.brand!==brand){const words=searchWords(name+' '+brand);d={name,brand,words,phrase:words.join(' '),brandWords:searchWords(brand)};documents.set(food,d)}return d}
+// One insertion/deletion/substitution/transposition, bounded by word length.
+function oneEdit(a,b){if(a===b||a.length<5||b.length<5||a.length>40||b.length>40||Math.abs(a.length-b.length)>1||/\d/.test(a+b)||preparation.has(a)||preparation.has(b))return false;let i=0;while(i<a.length&&i<b.length&&a[i]===b[i])i++;if(a.length===b.length)return a.slice(i+1)===b.slice(i+1)||(a[i]===b[i+1]&&a[i+1]===b[i]&&a.slice(i+2)===b.slice(i+2));return a.length>b.length?a.slice(i+1)===b.slice(i):a.slice(i)===b.slice(i+1)}
+function scoreDocument(terms,food,fuzzy){const d=documentFor(food);let errors=0,prefixes=0;for(const t of terms){if(d.words.includes(t))continue;if(!preparation.has(t)&&t.length>=3&&d.words.some(w=>w.startsWith(t))){prefixes++;continue}if(fuzzy&&errors===0&&d.words.some(w=>oneEdit(t,w))){errors++;continue}return null}const needle=terms.join(' ');let score=100+terms.length*12-Math.max(0,d.words.length-terms.length)*2-prefixes*4-errors*65;if(d.phrase===needle)score+=80;else if(d.phrase.startsWith(needle))score+=30;else if(d.phrase.includes(needle))score+=15;if(d.brandWords.length&&d.brandWords.every(w=>terms.includes(w)))score+=25;score+=['cal','pro','carb','fat'].filter(k=>typeof food[k]==='number'&&Number.isFinite(food[k])).length*2;score+=food.provenance?.dataset==='foundation'?12:food.provenance?.dataset==='fndds'?3:0;return {score,approximate:errors>0}}
+export function relevance(query,food){const words=searchWords(query);return words.length?scoreDocument(words,food,true)?.score??-Infinity:-Infinity}
+export function rankFoods(query,foods){const terms=searchWords(query);if(!terms.length)return [];const scan=fuzzy=>foods.map((food,i)=>({food,i,match:scoreDocument(terms,food,fuzzy)})).filter(r=>r.match);let rows=scan(false);if(!rows.length)rows=scan(true);return rows.sort((a,b)=>b.match.score-a.match.score||a.i-b.i).map(r=>r.match.approximate?{...r.food,searchMatch:{kind:'approximate'}}:r.food)}
+const nutrientKeys=['cal','pro','carb','fat','sat','fiber','sugar','sodium','cholesterol','potassium','calcium','iron','magnesium','vitC','vitD','b12','folate'];
+export function combineResults(query,{saved=[],usda=[],off=[],additional=[]}){
+ // unifiedSearch supplies saved records newest first. Choose the correction
+ // before ranking so an older, shorter name cannot displace updated nutrition.
+ const correctionCodes=new Set(),currentSaved=saved.filter(f=>{const code=normalizeBarcode(f.barcode);if(!code)return true;if(correctionCodes.has(code))return false;correctionCodes.add(code);return true});
+ const result=[],seen=new Set(),savedCodes=new Set(currentSaved.map(f=>normalizeBarcode(f.barcode)).filter(Boolean));
+ for(const [kind,list]of [['saved',rankFoods(query,currentSaved)],['external',rankFoods(query,[...usda,...off,...additional])]])for(const f of list){
   if(kind!=='saved'&&normalizeBarcode(f.barcode)&&savedCodes.has(normalizeBarcode(f.barcode)))continue;
-  const key=kind==='saved'?(normalizeBarcode(f.barcode)||f.id):[f.provenance?.provider||f.source,f.provenance?.dataset||'',f.provenance?.recordId||normalizeBarcode(f.barcode)||f.id].join(':');
+  const identity=[f.provenance?.provider||f.source,f.provenance?.dataset||'',normalizeBarcode(f.barcode)||f.provenance?.recordId||f.id];
+  const key=kind==='saved'?(normalizeBarcode(f.barcode)||f.id):JSON.stringify([...identity,f.name,f.brand||'',f.base,f.unit,f.serving?.description||'',f.serving?.grams??null,f.serving?.ml??null,...nutrientKeys.map(k=>f[k]??null)]);
   if(seen.has(key))continue;seen.add(key);result.push(f);
  }
  return result.slice(0,48);
 }
-// Provider results are independent: an outage never erases working local results.
-export async function unifiedSearch(query,{saved=[],catalogue,off,signal,onUpdate=()=>{}}){
- const groups={saved:[...saved].reverse(),usda:[],off:[]},issues=[];
- const emit=()=>{if(!signal?.aborted)onUpdate({foods:combineResults(query,groups),issues:[...issues],complete:false})};emit();
- await Promise.all([['usda',()=>catalogue.search(query,{signal})],['off',()=>off.search(query,{signal})]].map(async([name,run])=>{try{groups[name]=await run()}catch(e){if(e.name!=='AbortError')issues.push(e.message)}emit()}));
- if(signal?.aborted)return null;
- const result={foods:combineResults(query,groups),issues,complete:true};onUpdate(result);return result;
+export function debounceSearch(signal,delay=200){return new Promise((resolve,reject)=>{if(signal?.aborted)return reject(new DOMException('Cancelled','AbortError'));const abort=()=>{clearTimeout(timer);signal?.removeEventListener('abort',abort);reject(new DOMException('Cancelled','AbortError'))},timer=setTimeout(()=>{signal?.removeEventListener('abort',abort);resolve()},delay);signal?.addEventListener('abort',abort,{once:true})})}
+async function runProvider(provider,query,signal,timeoutMs){const controller=new AbortController();let timer,abort;if(signal?.aborted)throw new DOMException('Cancelled','AbortError');const cancelled=new Promise((_,reject)=>{abort=()=>{controller.abort();reject(new DOMException('Cancelled','AbortError'))};if(signal?.aborted)abort();else signal?.addEventListener('abort',abort,{once:true});timer=setTimeout(()=>{controller.abort();reject(Error(provider.label+' search timed out.'))},timeoutMs)});try{const work=provider.search(query,{signal:controller.signal});const rows=await Promise.race([work,cancelled]);if(!Array.isArray(rows)||rows.length>200||rows.some(f=>!f||typeof f!=='object'||typeof f.name!=='string'||f.name.length>300))throw Error('Invalid search response.');return rows}finally{clearTimeout(timer);signal?.removeEventListener('abort',abort)}}
+// At most two active providers; failures/cancellation cannot erase working results.
+export async function unifiedSearch(query,{saved=[],catalogue,off,additionalProviders=[],signal,onUpdate=()=>{},providerTimeoutMs=12000}){
+ query=validateSearchQuery(query);if(additionalProviders.length>1)throw Error('Only one additional provider may be queried.');
+ const groups={saved:[...saved].reverse(),usda:[],off:[],additional:[]},issues=[],states={};const providers=[{id:'usda',label:'USDA',search:(...a)=>catalogue.search(...a)},{id:'off',label:'Open Food Facts',search:(...a)=>off.search(...a)},...additionalProviders.map(p=>({...p,id:'additional'}))];
+ for(const p of providers)states[p.id]='pending';const emit=complete=>{if(!signal?.aborted)onUpdate({foods:combineResults(query,groups),issues:[...issues],providerStates:{...states},complete})};emit(false);let next=0;
+ await Promise.all(Array.from({length:2},async()=>{while(next<providers.length&&!signal?.aborted){const p=providers[next++];try{groups[p.id]=await runProvider(p,query,signal,providerTimeoutMs);states[p.id]='ready'}catch(e){if(e?.name==='AbortError'){states[p.id]='cancelled'}else{states[p.id]='unavailable';const message=e instanceof Error?e.message:'Unexpected provider response.';issues.push((message.includes(p.label)?'':p.label+': ')+message)}}emit(false)}}));
+ if(signal?.aborted)return null;const result={foods:combineResults(query,groups),issues,providerStates:{...states},complete:true};onUpdate(result);return result;
 }

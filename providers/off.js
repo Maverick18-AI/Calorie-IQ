@@ -1,3 +1,4 @@
+import {validateSearchQuery} from '../search.js';
 import {productFood} from '../nutrition.js';
 import {nutrientInfo} from '../nutrients.js';
 export const OFF_FIELDS='code,product_name,product_name_en,brands,nutriments,serving_size,serving_quantity,serving_quantity_unit,nutrition_data_per,quantity,product_quantity,product_quantity_unit,servings_per_container,ingredients_text,ingredients_text_en,last_modified_t';
@@ -35,10 +36,10 @@ export function createOFF({fetchJSON=(...args)=>globalThis.fetch(...args),storag
  }
  const identity='&app_name=CalorieIQ&app_version='+encodeURIComponent(version);
  return {
-  async search(query,{signal}={}){if(globalThis.navigator?.onLine===false)throw Error('Offline: online packaged-food search is unavailable. Previously downloaded USDA data and saved foods may still work.');
+  async search(query,{signal}={}){query=validateSearchQuery(query);if(globalThis.navigator?.onLine===false)throw Error('Offline: online packaged-food search is unavailable. Previously downloaded USDA data and saved foods may still work.');
    const url='https://world.openfoodfacts.org/cgi/search.pl?search_terms='+encodeURIComponent(query)+'&search_simple=1&action=process&json=1&page_size=12&fields='+OFF_FIELDS+identity;
    const {data:j,retrieved}=await request(url,'search',{signal});if(!Array.isArray(j.products))throw Error('Open Food Facts returned an unexpected search response.');return j.products.map(p=>offFood(p,{retrieved}));
   },
-  async lookup(code,{signal}={}){const {data:j,retrieved}=await request('https://world.openfoodfacts.org/api/v3/product/'+encodeURIComponent(code)+'.json?fields='+OFF_FIELDS+identity,'product',{signal});if(!j.product)throw Error('Product not found. Enter it manually.');return offFood({...j.product,code:j.product.code||code},{retrieved})},
+  async lookup(code,{signal}={}){if(!/^\d{8,14}$/.test(String(code)))throw Error('Enter an 8–14 digit barcode.');const {data:j,retrieved}=await request('https://world.openfoodfacts.org/api/v3/product/'+encodeURIComponent(code)+'.json?fields='+OFF_FIELDS+identity,'product',{signal});if(!j.product)throw Error('Product not found. Enter it manually.');return offFood({...j.product,code:j.product.code||code},{retrieved})},
  };
 }

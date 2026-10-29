@@ -3,9 +3,10 @@
 A free, local-first food log, multi-source nutrition and weight tracker for iPhone and desktop. No account,
 subscription, advertisements, or paid backend.
 
-**Development mode is enabled.** Each new ID/generation in `build-config.js`
-clears CalorieIQ test data once. Reopening the same version keeps new entries.
-Set `development:false` before production. See [SERVING-UPDATE.md](SERVING-UPDATE.md)
+**Development mode is enabled.** Build 2.6.0-dev.2 (generation 8) sets
+`resetData:false`: existing diary data and drafts are preserved when updating.
+Earlier development releases reset test data. Keep resets disabled in future
+releases unless explicitly approved; set `development:false` before production. See [SERVING-UPDATE.md](SERVING-UPDATE.md)
 for serving-size rules, real API findings, and reset details.
 
 ## Features
@@ -20,6 +21,8 @@ for serving-size rules, real API findings, and reset details.
 - Optional adult maintenance-calorie estimate, applied only after reviewing/saving goals
 - Explicit serving/gram/milliliter quantities and incomplete-nutrition indicators
 - Unified saved-food, USDA Foundation/SR Legacy/FNDDS and Open Food Facts search
+- Brand-aware relevance, conservative spelling suggestions, cancellation, debounce and source-specific failures
+- Separate fictional, read-only provider demonstration; live FatSecret is disabled
 - 13,588 real local USDA reference records, loaded on demand with source provenance
 - Exact/padded barcode lookup with latest saved corrections taking priority
 - Local camera and photo barcode scanning, with supported torch and zoom
@@ -55,14 +58,16 @@ regularly; browser storage can be erased. Installations do not sync or provide
 password protection. Backups retain all stored records, including profiles from earlier versions, unencrypted.
 
 Outside development resets, validated version 1 and version 2 backups remain supported.
-Development releases intentionally clear only CalorieIQ-owned test storage once per build.
+This release preserves CalorieIQ storage on upgrade, including legacy migration and recovery copies.
 Never clear all browser/site data just to install an update.
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for architecture, verification, release
 procedure, known limitations and pending physical iPhone acceptance checks.
 
 Published via the existing GitHub Pages configuration (`main`, repository root).
-Version 2.6 is prepared for the authorized release through the existing Pages configuration.
-See [V2.6-RELEASE.md](V2.6-RELEASE.md) for release checks and remaining physical iPhone acceptance work.
+Version 2.6.0-dev.2 uses the existing Pages configuration.
+See [V2.6-SEARCH-RELEASE.md](V2.6-SEARCH-RELEASE.md) for the latest release checks,
+[NUTRITION-API-REVIEW.md](NUTRITION-API-REVIEW.md) for the FatSecret/Cloudflare decision,
+and [the separate fictional demo](dev/provider-demo.html).
 See [MULTISOURCE-REPORT.md](MULTISOURCE-REPORT.md) for source counts, verification and limitations,
 and [data/usda/README.md](data/usda/README.md) for reproducible imports. USDA Branded and CNF are not bundled.
