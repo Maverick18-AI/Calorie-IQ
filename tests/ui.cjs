@@ -41,4 +41,6 @@ async function nav(page,name) {
   if (name==='add') return search(page);
   await page.locator('nav button[data-view='+name+']').click();
 }
-module.exports={openAdd,search,manual,more,barcode,manageFoods,quick,reuse,nav};
+async function backups(page) {await nav(page,'settings');if(!await page.locator('#dataBackups').evaluate(n=>n.open))await page.locator('#dataBackups > summary').click();}
+async function recovery(page) {await backups(page);if(!await page.locator('#recoveryTools').evaluate(n=>n.open))await page.locator('#recoveryTools > summary').click();}
+module.exports={openAdd,search,manual,more,barcode,manageFoods,quick,reuse,nav,backups,recovery};

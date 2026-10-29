@@ -25,7 +25,10 @@ for serving-size rules, real API findings, and reset details.
 - Local camera and photo barcode scanning, with supported torch and zoom
 - Recipe builder with ingredient snapshots and configurable servings
 - Reusable meal templates and package portions when quantities support conversion
-- Weight goals, start/current/change/remaining, 7/30/90-day trends and optional 7-day averages
+- Pounds by default, editable starting/current/goal weights, dated edits, 7/30/90-day and all-time interactive trends
+- Personal profile with feet/inches height, adult calorie estimates for lose/maintain/gain, and explicit manual targets
+- Pumpkin-orange/black branding with updated favicon, Apple touch icon and maskable PWA icons
+- Collapsed Settings → Data & Backups with validated restore and recovery tools
 - Single-user interface per installation; existing active records and older backup profiles retained
 - Validated JSON backup/restore, recovery snapshot and legacy-data migration
 - Offline app shell, scanner and saved foods; previously downloaded USDA details work offline
@@ -58,7 +61,7 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for architecture, verification, release
 procedure, known limitations and pending physical iPhone acceptance checks.
 
 Published via the existing GitHub Pages configuration (`main`, repository root).
-Version 2.4 has been independently verified for the authorized release through the existing Pages configuration.
-See [V2.4-RELEASE.md](V2.4-RELEASE.md) for release checks and remaining physical iPhone acceptance work.
+Version 2.5 is prepared for the authorized release through the existing Pages configuration.
+See [V2.5-RELEASE.md](V2.5-RELEASE.md) for release checks and remaining physical iPhone acceptance work.
 See [MULTISOURCE-REPORT.md](MULTISOURCE-REPORT.md) for source counts, verification and limitations,
 and [data/usda/README.md](data/usda/README.md) for reproducible imports. USDA Branded and CNF are not bundled.

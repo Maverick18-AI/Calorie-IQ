@@ -71,7 +71,7 @@ module.exports = async function reliability(browser) {
   });
 
   await run('kg/lb changes convert an entered or edited weight', async ({page,nav,saved}) => {
-    await nav('progress'); await page.locator('#weight').fill('70');
+    await nav('progress'); await page.locator('#weightUnit').selectOption('kg');await page.locator('#weight').fill('70');
     await page.locator('#weightUnit').selectOption('lb');
     assert.ok(Math.abs(Number(await page.locator('#weight').inputValue())-154.323583526)<1e-6);
     await page.locator('#weightUnit').selectOption('kg');
@@ -173,7 +173,7 @@ module.exports = async function reliability(browser) {
     await Promise.all([page.locator('#submitFood').click(),second.locator('#submitFood').click()]);
     let names=Object.values((await saved()).profiles[0].logs).flat().map(e=>e.name);assert.deepEqual(names,['Writer A']);
     assert.equal(await second.locator('#name').inputValue(),'Writer B');
-    await nav('settings',second);const dl=second.waitForEvent('download');await second.locator('#downloadDrafts').click();assert.match((await dl).suggestedFilename(),/unsaved-drafts/);
+    await ui.recovery(second);const dl=second.waitForEvent('download');await second.locator('#downloadDrafts').click();assert.match((await dl).suggestedFilename(),/unsaved-drafts/);
     await page.close();await second.locator('#claimWriter').click();await second.waitForFunction(()=>document.querySelector('#notice').textContent.includes('Reload'));
     await second.reload();await nav('add',second);assert.equal(await second.locator('#name').inputValue(),'Writer B');
     decisions.push('dismiss');await second.locator('#submitFood').click();names=Object.values((await saved(second)).profiles[0].logs).flat().map(e=>e.name);assert.deepEqual(names,['Writer A']);

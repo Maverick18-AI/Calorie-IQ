@@ -17,6 +17,9 @@ export function validate(db){
  if(!obj(db)||db.version!==2||!Number.isSafeInteger(db.revision)||db.revision<0||!Array.isArray(db.profiles)||!db.profiles.length||db.profiles.length>50||!Array.isArray(db.cache)||db.cache.length>200||!(db.lastBackup===null||dateOK(db.lastBackup)))fail();
  const ids=new Set();for(const p of db.profiles){
  if(!obj(p)||!text(p.id)||ids.has(p.id)||!text(p.name,60)||!goalsOK(p.goals)||!obj(p.logs)||!obj(p.dayGoals))fail();ids.add(p.id);
+ if(p.personal!==undefined&&(!obj(p.personal)||!(p.personal.age===null||num(p.personal.age,18,100)&&Number.isInteger(p.personal.age))||!(p.personal.heightCm===null||num(p.personal.heightCm,100,250))||!['manual','female','male'].includes(p.personal.sex)||!['','sedentary','light','moderate','active'].includes(p.personal.activity)||!['lb','kg'].includes(p.personal.weightUnit)))fail();
+ if(p.plan?.startKg!==undefined&&!(p.plan.startKg===null||num(p.plan.startKg,.1,1000)))fail();
+ if(p.plan?.startDate!==undefined&&!(p.plan.startDate===null||dateOK(p.plan.startDate)))fail();
  if(p.plan!==undefined&&(!obj(p.plan)||!(p.plan.goalKg===null||num(p.plan.goalKg,.1,1000))||!['lose','maintain','gain'].includes(p.plan.direction)||!(p.plan.weeklyRate===null||num(p.plan.weeklyRate,0,2))||!['','sedentary','light','moderate','active'].includes(p.plan.activity)))fail();
  for(const [d,rs] of Object.entries(p.logs))if(!dateOK(d)||!Array.isArray(rs)||rs.length>2000||!rs.every(entryOK)||new Set(rs.map(r=>r.id)).size!==rs.length)fail();
  for(const [d,g] of Object.entries(p.dayGoals))if(!dateOK(d)||!goalsOK(g))fail();
