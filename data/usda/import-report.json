@@ -1,0 +1,28 @@
+{
+  "input": {
+    "foundation": 424,
+    "legacy": 7793,
+    "fndds": 5432
+  },
+  "included": {
+    "foundation": 364,
+    "legacy": 7793,
+    "fndds": 5431
+  },
+  "excluded": {
+    "foundation": {
+      "missing-energy": 50,
+      "invalid-nutrient": 10
+    },
+    "legacy": {},
+    "fndds": {
+      "no-nutrition": 1
+    }
+  },
+  "duplicates": 0,
+  "qualityWarnings": 169,
+  "version": "usda-2026-10-v1",
+  "indexBytes": 1326952,
+  "detailBytes": 9667791,
+  "shards": 76
+}

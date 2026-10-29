@@ -1,7 +1,7 @@
 import {nutrients as KEYS,primary,nutrientInfo} from './nutrients.js';
 const NAMES=Object.fromEntries(KEYS.map(k=>[k,nutrientInfo[k].off]));
-const positive=v=>v!==null&&v!==''&&v!==undefined&&Number.isFinite(Number(v))&&Number(v)>0;
-const reading=v=>v!==null&&v!==''&&v!==undefined&&Number.isFinite(Number(v))&&Number(v)>=0?Number(v):null;
+const positive=v=>(typeof v==='number'||typeof v==='string'&&v.trim()!=='')&&v!==null&&v!==''&&v!==undefined&&Number.isFinite(Number(v))&&Number(v)>0;
+const reading=v=>(typeof v==='number'||typeof v==='string'&&v.trim()!=='')&&v!==null&&v!==''&&v!==undefined&&Number.isFinite(Number(v))&&Number(v)>=0?Number(v):null;
 
 export function servingInfo(p){
  const description=String(p.serving_size||'').trim().slice(0,300),warnings=[];

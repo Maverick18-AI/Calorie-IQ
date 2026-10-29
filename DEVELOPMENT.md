@@ -1,6 +1,6 @@
 # CalorieIQ development notes
 
-Current local candidate: **2.3.0-dev.1**, generation **3**. See [V2.3-RELEASE.md](V2.3-RELEASE.md) for current features, verification and limitations. The original implementation notes below are historical.
+Current local candidate: **2.4.0-dev.1**, generation **4**. See [MULTISOURCE-REPORT.md](MULTISOURCE-REPORT.md) for current features, verification and limitations. The original implementation notes below are historical.
 
 ## Original 2.0 checkpoint
 
@@ -70,6 +70,6 @@ See RELIABILITY.md for the six-issue reliability work, compatibility policy and 
 
 ## Service use
 
-Open Food Facts calls happen only on explicit search/lookup. Name search uses the full-text CGI endpoint; barcode lookup uses API v3. Local limits are conservative per running tab, not globally coordinated across devices/IPs. No API key is embedded. Complete Open Food Facts app registration/usage identification before a public release, using the project owner's contact details. No registration or message has been submitted on the owner's behalf.
+Open Food Facts calls happen only on explicit search/lookup. Name search uses the full-text CGI endpoint; barcode lookup uses API v3. Local limits are conservative and coordinated across supported same-origin tabs using Web Locks and local rate state; they are not globally coordinated across devices/IPs. No API key is embedded. Complete Open Food Facts app registration/usage identification before a public release, using the project owner's contact details. No registration or message has been submitted on the owner's behalf.
 
 No subscription, advertisements, analytics, account service, or paid backend was added.

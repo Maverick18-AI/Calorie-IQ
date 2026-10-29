@@ -1,0 +1,91 @@
+{
+  "release": "CNF 2026",
+  "retrieved": "2026-10-29",
+  "url": "https://open.canada.ca/data/en/dataset/1b6139bd-ed7e-4043-bc28-ff00e10f3109",
+  "license": "Open Government Licence - Canada 2.0",
+  "licenseUrl": "https://open.canada.ca/en/open-government-licence-canada",
+  "foodNames": 5993,
+  "bySource": [
+    {
+      "code": "0",
+      "description": "Food based on data from USDA: No changes",
+      "count": 3529
+    },
+    {
+      "code": "1",
+      "description": "Food based on data from USDA: some nutrients changed to meet Canadian regulations",
+      "count": 87
+    },
+    {
+      "code": "3",
+      "description": "Food based on data from USDA: some nutrients analyzed in the Canadian product",
+      "count": 347
+    },
+    {
+      "code": "4",
+      "description": "Food based on data from USDA: some nutrients calculated in the Canadian product",
+      "count": 9
+    },
+    {
+      "code": "6",
+      "description": "Food based on data from USDA: some values supplied by manufacturers of the Canadian product",
+      "count": 7
+    },
+    {
+      "code": "9",
+      "description": "Data supplied by an international database other than USDA",
+      "count": 2
+    },
+    {
+      "code": "10",
+      "description": "Food based on data from USDA: some nutrient analyzed in the Canadian product. Food has been deleted from USDA",
+      "count": 1
+    },
+    {
+      "code": "11",
+      "description": "Food based on data from USDA. Food has been deleted from USDA",
+      "count": 75
+    },
+    {
+      "code": "12",
+      "description": "Food based on data from USDA: information from USDA survey files",
+      "count": 130
+    },
+    {
+      "code": "20",
+      "description": "Food available in the Canadian food supply, but not found in the USDA: no changes from Nutrition Canada Survey (1970–1972)",
+      "count": 25
+    },
+    {
+      "code": "23",
+      "description": "Food available in the Canadian food supply, major nutrients analyzed in the Canadian product",
+      "count": 255
+    },
+    {
+      "code": "24",
+      "description": "Major nutrients calculated in the Canadian product; not a SNAP-CAN food",
+      "count": 45
+    },
+    {
+      "code": "26",
+      "description": "Food available in the Canadian food supply, but not found in USDA: nutrient values supplied by manufacturers of the Canadian product",
+      "count": 116
+    },
+    {
+      "code": "28",
+      "description": "Traditional food",
+      "count": 212
+    },
+    {
+      "code": "35",
+      "description": "CNF recipe compilation",
+      "count": 134
+    },
+    {
+      "code": "37",
+      "description": "CNF Sampling and Analysis Program (SNAP-CAN)",
+      "count": 1019
+    }
+  ],
+  "decision": "Defer integration. USDA already supplies broad generic coverage; retain this as a future Canadian-specific partition after an incremental-coverage and nutrient-quality review. No CNF food records are shipped."
+}

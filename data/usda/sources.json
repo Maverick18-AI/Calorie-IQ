@@ -1,0 +1,33 @@
+{
+  "version": "usda-2026-10-v1",
+  "retrieved": "2026-10-29",
+  "license": "CC0-1.0",
+  "licenseUrl": "https://creativecommons.org/publicdomain/zero/1.0/",
+  "citation": "U.S. Department of Agriculture, Agricultural Research Service. FoodData Central.",
+  "sources": [
+    {
+      "id": "foundation",
+      "label": "USDA Foundation",
+      "release": "2026-10-29",
+      "url": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_foundation_food_json_2026-10-29.zip",
+      "sha256": "dd414cc9f1a132626bad354ef6655972c78b44aff14f16114dc899708663c579",
+      "jsonSha256": "990e7731dcec30cecbbb212896a0fe4333f38c65ce7f525e2b679f0dc27658a1"
+    },
+    {
+      "id": "legacy",
+      "label": "USDA SR Legacy",
+      "release": "2018-04",
+      "url": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_sr_legacy_food_json_2018-04.zip",
+      "sha256": "0fe8ae486a2c8eb42cb96413f058deb51863a46c8fb8eeb4b1fb45006dd338ef",
+      "jsonSha256": "70d4235ae3a2bdf48a7b9eaa1286a83fa67b6f3270436c9ce8b008213f500129"
+    },
+    {
+      "id": "fndds",
+      "label": "USDA FNDDS",
+      "release": "2021-2023 (2024-10-31 export)",
+      "url": "https://fdc.nal.usda.gov/fdc-datasets/FoodData_Central_survey_food_json_2024-10-31.zip",
+      "sha256": "dfb06ae7ddc397ccd570b91c14b75438ab2ba39f64f22d321f61d4a52a77f3eb",
+      "jsonSha256": "2e7eb9fda92adf1d4d784dba5eaa3a7fd4418cd86ccff383c7c9294d79e9b808"
+    }
+  ]
+}

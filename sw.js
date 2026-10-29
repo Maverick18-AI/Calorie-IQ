@@ -1,6 +1,6 @@
 importScripts('./build-config.js');
 const BUILD=self.CALORIEIQ_BUILD,CACHE='calorieiq-shell-'+BUILD.id;
-const ASSETS=['./','./index.html','./styles.css','./app.js','./core.js','./nutrition.js','./diary.js','./nutrients.js','./wellness.js','./development.js','./build-config.js','./writer.js','./scanner.js','./manifest.webmanifest','./icons/icon.svg','./icons/icon-192.png','./icons/icon-512.png','./vendor/zxing-browser.min.js'];
+const ASSETS=['./','./index.html','./styles.css','./app.js','./core.js','./nutrition.js','./search.js','./providers/usda.js','./providers/catalogue.js','./providers/off.js','./diary.js','./nutrients.js','./wellness.js','./development.js','./build-config.js','./writer.js','./scanner.js','./manifest.webmanifest','./icons/icon.svg','./icons/icon-192.png','./icons/icon-512.png','./vendor/zxing-browser.min.js'];
 self.addEventListener('install',e=>e.waitUntil((async()=>{await caches.open(CACHE).then(c=>c.addAll(ASSETS));if(BUILD.development)await self.skipWaiting()})()));
 self.addEventListener('message',e=>{if(e.data==='SKIP_WAITING')self.skipWaiting()});
 self.addEventListener('activate',e=>e.waitUntil((async()=>{let upgrade=false;for(const name of await caches.keys())if((name.startsWith('calorieiq-shell-')||name==='calorieiq-v1')&&name!==CACHE){upgrade=true;await caches.delete(name)}await self.clients.claim();if(BUILD.development&&upgrade){for(const client of await self.clients.matchAll({type:'window'}))if(client.url.startsWith(self.registration.scope))client.postMessage({type:'CALORIEIQ_DEV_UPDATE',build:BUILD.id})}})()));
