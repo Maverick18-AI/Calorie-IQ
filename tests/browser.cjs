@@ -42,5 +42,6 @@ const assert=require('node:assert/strict');
  await require('./multisource.cjs')(browser);
  await require('./v25.cjs')(browser);
  await require('./update.cjs')(browser);
+ await require('./cache-update.cjs')(browser);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});
