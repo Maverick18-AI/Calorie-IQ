@@ -1,6 +1,6 @@
 # CalorieIQ development notes
 
-Current release: **2.2.0-dev.1**, generation **2**. See [V2.2-RELEASE.md](V2.2-RELEASE.md) for current features, verification and limitations. The original implementation notes below are historical.
+Current local candidate: **2.3.0-dev.1**, generation **3**. See [V2.3-RELEASE.md](V2.3-RELEASE.md) for current features, verification and limitations. The original implementation notes below are historical.
 
 ## Original 2.0 checkpoint
 
@@ -45,7 +45,7 @@ Import accepts validated legacy and version 2 JSON, with a 10 MB limit. The comp
 
 The app retains localStorage and the version 2 schema. The reliability changes add a session-wide exclusive Web Lock: one tab can save; other tabs are read-only and retain their drafts. Startup/migration writes, normal saves and restore require ownership. Ownership ends on page exit and is rechecked on back/forward restoration. Complete stored-string and revision comparisons also reject replacement/deletion conflicts. Browsers without Web Locks fail closed to read-only access. Older app versions do not participate in the lock: close old-version tabs before upgrading. This is not cross-device synchronization or protection against unrelated same-origin scripts. Browser eviction and device loss still require external backups.
 
-Family profiles are local organizational separation, not authentication or synchronization. Unsaved forms and recipe drafts are retained during navigation and saved to per-tab sessionStorage for reload recovery. Replacing drafts or changing profiles requires confirmation. Session storage may fail or disappear when the tab/session closes; download important drafts before closing. Draft downloads are separate from restorable diary backups. The chart table provides exact nutrition values and weight entries provide exact weigh-ins. Gaps in calorie data are omitted from charts rather than assumed to be zero.
+The 2.3 interface uses only the existing active local user. Profile controls are removed; the underlying version-2 profile structure remains for backup compatibility, without deleting archived records. No authentication or synchronization is added. Unsaved forms and recipe drafts are retained during navigation and saved to per-tab sessionStorage for reload recovery. Replacing drafts or restoring data requires confirmation. Session storage may fail or disappear when the tab/session closes; download important drafts before closing. Draft downloads are separate from restorable diary backups. The chart table provides exact nutrition values and weight entries provide exact weigh-ins. Gaps in calorie data are omitted from charts rather than assumed to be zero.
 
 See RELIABILITY.md for the six-issue reliability work, compatibility policy and regression results. The original verification list above describes the initial implementation before the local checkpoint was created.
 

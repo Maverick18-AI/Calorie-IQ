@@ -1,3 +1,4 @@
+const ui=require('./ui.cjs');
 const assert=require('node:assert/strict');
 const http=require('node:http');
 const fs=require('node:fs/promises');
@@ -10,10 +11,10 @@ module.exports=async browser=>{
  try{
  const p=await context.newPage(),errors=[];p.on('pageerror',e=>errors.push(e.message));p.on('console',m=>{if(m.type()==='error')console.log('UPDATE console:',m.text())});p.on('dialog',d=>d.accept());const url='http://127.0.0.1:'+server.address().port;
  await p.goto(url);await p.waitForFunction(()=>document.querySelector('#remaining').textContent.length>0);await p.evaluate(()=>Promise.race([navigator.serviceWorker.ready,new Promise((_,reject)=>setTimeout(()=>reject(Error('Worker install timeout')),10000))]));await p.reload();
- async function add(name){await p.locator('nav button[data-view=add]').click();await p.locator('#name').fill(name);await p.locator('#unit').selectOption('serving');await p.locator('#cal').fill('100');await p.locator('#submitFood').click();}
+ async function add(name){await ui.manual(p);await p.locator('#name').fill(name);await p.locator('#unit').selectOption('serving');await p.locator('#cal').fill('100');await p.locator('#submitFood').click();}
  await add('Build 101 test');await p.evaluate(()=>{localStorage.setItem('unrelated-app','keep');sessionStorage.setItem('unrelated-session','keep');localStorage.setItem('calorieiq-recovery-v2','discard test recovery')});
  await p.reload();await p.waitForFunction(()=>document.querySelector('#calSummary').textContent.includes('100 consumed'));
- await p.locator('nav button[data-view=add]').click();await p.locator('#name').fill('Old build draft');
+ await ui.manual(p);await p.locator('#name').fill('Old build draft');
  generation=102;await p.evaluate(()=>navigator.serviceWorker.getRegistration().then(r=>r.update()));
  await p.waitForFunction(()=>document.querySelector('#devBanner')?.textContent.includes('update-test-102'),{},{timeout:20000});
  assert.match(await p.locator('#calSummary').textContent(),/0 consumed/);assert.equal(await p.locator('#name').inputValue(),'');

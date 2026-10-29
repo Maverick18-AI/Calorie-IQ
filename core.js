@@ -28,7 +28,7 @@ export function validate(db){
   for(const k of nutrients){
    if(extra.includes(k)&&r[k]===undefined)continue; // Older backups have no extra nutrient claims.
    const expected=calculated.unknown[k]?null:calculated[k]/r.yield*r.base;
-   if(expected===null?r[k]!==null:r[k]===null||Math.abs(r[k]-expected)>1e-8*Math.max(1,Math.abs(expected)))throw Error('Inconsistent recipe nutrition: '+r.name+'. Correct its library values in the backup before importing. Diary history was not changed.');
+   if(expected===null?r[k]!==null:r[k]===null||Math.abs(r[k]-expected)>1e-8*Math.max(1,Math.abs(expected)))throw Error('Inconsistent recipe nutrition: '+r.name+'. Correct its library values in the backup before importing. Food Log history was not changed.');
   }
  }
  for(const collection of [p.foods,p.recipes,p.meals])if(new Set(collection.map(x=>x.id)).size!==collection.length)fail();

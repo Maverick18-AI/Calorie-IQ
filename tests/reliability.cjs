@@ -1,3 +1,4 @@
+const ui=require('./ui.cjs');
 require('../build-config.js');
 const activeBuild=globalThis.CALORIEIQ_BUILD;
 const assert = require('node:assert/strict');
@@ -33,10 +34,10 @@ module.exports = async function reliability(browser) {
       const page = await context.newPage(); instrument(page);
       await page.goto(base);
       await page.waitForFunction(() => document.querySelector('#remaining').textContent.length > 0);
-      const nav = (name, target = page) => target.locator(`nav button[data-view="${name}"]`).click();
+      const nav = (name, target = page) => ui.nav(target,name);
       const saved = (target = page) => target.evaluate(() => JSON.parse(localStorage.getItem('calorieiq-v2')));
       async function food(name, target = page) {
-        await nav('add', target);
+        await ui.manual(target);
         await target.locator('#name').fill(name);
         await target.locator('#unit').selectOption('serving');
         await target.locator('#cal').fill('100');
@@ -52,7 +53,7 @@ module.exports = async function reliability(browser) {
   await run('ambiguous food requires label units; mass and volume are not relabeled', async ({context,page,nav,saved}) => {
     await context.unroute('https://world.openfoodfacts.org/**');
     await context.route('https://world.openfoodfacts.org/**', route => route.fulfill({json: {product: {product_name:'Ambiguous liquid',serving_size:'250 ml',nutriments:{'energy-kcal_100g':50,proteins_100g:3}}}}));
-    await nav('add'); await page.locator('#barcode').fill('1234567890123'); await page.locator('#barcodeForm button').click();
+    await ui.barcode(page); await page.locator('#barcode').fill('1234567890123'); await page.locator('#barcodeForm button').click();
     await page.waitForFunction(() => document.querySelector('#name').value === 'Ambiguous liquid');
     assert.equal(await page.locator('#unit').inputValue(), '');
     await page.locator('#submitFood').click();
@@ -88,7 +89,7 @@ module.exports = async function reliability(browser) {
       await nav('add');
       await page.evaluate(() => {window.fetch = (url,options) => {window.lookupSignal=options.signal;return new Promise(resolve => window.finishLookup = resolve)}});
       if(type==='search'){await page.locator('#query').fill('milk');await page.locator('#searchForm button').click()}
-      else {await page.locator('#barcode').fill('1234567890123');await page.locator('#barcodeForm button').click()}
+      else {await ui.barcode(page);await page.locator('#barcode').fill('1234567890123');await page.locator('#barcodeForm button').click()}
       await page.waitForFunction(() => typeof window.finishLookup === 'function');
       await nav('diary');
       assert.equal(await page.evaluate(()=>lookupSignal.aborted),true);
@@ -101,18 +102,17 @@ module.exports = async function reliability(browser) {
     }
   });
 
-  await run('food drafts survive navigation/reload and can cancel replacement/profile changes', async ({page,nav,food,decisions}) => {
+  await run('food drafts survive navigation/reload and can cancel replacement/restore', async ({page,nav,food,decisions,saved}) => {
     await food('Keep my food'); await nav('library'); await nav('add');
     assert.equal(await page.locator('#name').inputValue(),'Keep my food');
     assert.equal(await page.evaluate(()=>Object.hasOwn(JSON.parse(sessionStorage.getItem('calorieiq-drafts-v1')),'raw')),false);
     decisions.push('dismiss'); await page.locator('#manual').click();
     assert.equal(await page.locator('#name').inputValue(),'Keep my food');
-    decisions.push('dismiss'); await page.locator('#profile').selectOption('family');
-    assert.equal(await page.locator('#profile').inputValue(),'me');
+    const before=await saved();await nav('settings');decisions.push('dismiss');await page.locator('#import').setInputFiles({name:'valid.json',mimeType:'application/json',buffer:Buffer.from(JSON.stringify(before))});await page.waitForFunction(()=>document.querySelector('#import').value==='');assert.deepEqual(await saved(),before);assert.equal(await page.locator('#name').inputValue(),'Keep my food');
     await page.reload(); await page.waitForFunction(() => document.querySelector('#name').value==='Keep my food');
     await nav('add');assert.equal(await page.locator('#cal').inputValue(),'100');
-    await page.locator('#profile').selectOption('family');
-    assert.equal(await page.locator('#name').inputValue(),'');
+    assert.equal(await page.locator('#profile').count(),0);
+    assert.equal(await page.locator('#name').inputValue(),'Keep my food');
   });
 
   await run('recipe ingredients/name/yield survive navigation and reload', async ({page,nav,food,decisions}) => {
@@ -142,17 +142,16 @@ module.exports = async function reliability(browser) {
     await nav('library');await nav('add');await page.reload();await nav('add');
     await page.locator('#submitFood').click();
     let entries=Object.values((await saved()).profiles[0].logs).flat();assert.equal(entries.length,1);assert.equal(entries[0].quantity,2);
-    await nav('library');await page.locator('#savedFoods').getByRole('button',{name:'Edit food',exact:true}).click();await page.locator('#cal').fill('300');
+    await ui.manageFoods(page);await page.locator('#savedFoods').getByRole('button',{name:'Edit food',exact:true}).click();await page.locator('#cal').fill('300');
     await page.reload();await nav('add');await page.locator('#submitFood').click();
     const db=await saved();assert.equal(db.profiles[0].foods.length,1);assert.equal(db.profiles[0].foods[0].cal,300);
     entries=Object.values(db.profiles[0].logs).flat();assert.equal(entries[0].cal,100);
   });
 
-  await run('unsaved goals and weights survive navigation; profile creation can be cancelled', async ({page,nav,decisions}) => {
+  await run('unsaved goals and weights survive navigation with no profile controls', async ({page,nav,decisions}) => {
     await nav('settings');await page.locator('#goal-cal').fill('1850');
     await nav('diary');await nav('settings');assert.equal(await page.locator('#goal-cal').inputValue(),'1850');
-    await page.locator('#profileName').fill('New profile');decisions.push('dismiss');await page.locator('#profileForm button').click();
-    assert.equal(await page.locator('#profile').inputValue(),'me');assert.equal(await page.locator('#goal-cal').inputValue(),'1850');
+    assert.equal(await page.locator('#profileForm').count(),0);assert.equal(await page.locator('#goal-cal').inputValue(),'1850');
     await nav('progress');await page.locator('#weight').fill('65');await nav('diary');await nav('progress');assert.equal(await page.locator('#weight').inputValue(),'65');
   });
 
