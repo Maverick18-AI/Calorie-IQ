@@ -1,4 +1,8 @@
-# CalorieIQ 2.0 implementation and validation
+# CalorieIQ development notes
+
+Current release: **2.2.0-dev.1**, generation **2**. See [V2.2-RELEASE.md](V2.2-RELEASE.md) for current features, verification and limitations. The original implementation notes below are historical.
+
+## Original 2.0 checkpoint
 
 All six roadmap areas have local implementations. Nothing is deployed automatically.
 
@@ -45,11 +49,11 @@ Family profiles are local organizational separation, not authentication or synch
 
 See RELIABILITY.md for the six-issue reliability work, compatibility policy and regression results. The original verification list above describes the initial implementation before the local checkpoint was created.
 
-## Release procedure (not performed)
+## Release procedure (current)
 
-1. Export existing user data and run the core/browser tests.
-2. Increment the cache name in `sw.js` whenever changing shipped assets. HTML and modules must be cached together.
-3. Verify the previous installed service worker updates to a waiting worker, old data migrates, update activation works, and reload uses one coherent asset version.
+1. Run all Node and browser suites. Development test data resets once per new build.
+2. Advance BOTH build ID and generation in `build-config.js`. The service-worker cache name derives from the build ID. Add every new browser module to its shell assets.
+3. Verify the previous installed service worker updates to a waiting worker, development reset happens exactly once (or production data persists), activation works, and reload uses one coherent asset version.
 4. Deploy the complete root folder, including icons and vendor assets, only after authorization. Do not deploy tests or local tools if using a packaging workflow.
 5. Test offline reload and export/restore on the deployed HTTPS origin.
 

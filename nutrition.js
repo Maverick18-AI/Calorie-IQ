@@ -1,5 +1,5 @@
-const KEYS=['cal','pro','carb','fat'];
-const NAMES={cal:'energy-kcal',pro:'proteins',carb:'carbohydrates',fat:'fat'};
+import {nutrients as KEYS,primary,nutrientInfo} from './nutrients.js';
+const NAMES=Object.fromEntries(KEYS.map(k=>[k,nutrientInfo[k].off]));
 const positive=v=>v!==null&&v!==''&&v!==undefined&&Number.isFinite(Number(v))&&Number(v)>0;
 const reading=v=>v!==null&&v!==''&&v!==undefined&&Number.isFinite(Number(v))&&Number(v)>=0?Number(v):null;
 
@@ -26,13 +26,13 @@ export function servingInfo(p){
 
 export function productFood(p){
  const n=p.nutriments||{},declared=String(p.nutrition_data_per||'').toLowerCase().replace(/\s/g,'');
- const read=suffix=>{const values={};for(const k of KEYS)values[k]=reading(n[NAMES[k]+suffix]);if(values.cal===null){const kj=reading(n['energy'+suffix]);if(kj!==null)values.cal=kj/4.184}return values};
+ const read=suffix=>{const values={};for(const k of KEYS){const value=reading(n[NAMES[k]+suffix]);values[k]=value===null?null:value*nutrientInfo[k].factor;}if(values.cal===null){const kj=reading(n['energy'+suffix]);if(kj!==null)values.cal=kj/4.184}return values};
  const perServing=read('_serving'),per100=read('_100g'),has=x=>KEYS.some(k=>x[k]!==null);
  const info=servingInfo(p),s=info.serving,warnings=[...info.warnings];
  const standardUnit=declared==='100ml'?'ml':declared==='100g'?'g':declared==='serving'?(s.grams?'g':s.ml?'ml':null):null;
  const amount=standardUnit==='g'?s.grams:standardUnit==='ml'?s.ml:null;
  let values,unit,base,basis,selected,multiplier=1;
- if(has(perServing)){
+ if(primary.some(k=>perServing[k]!==null)||(!primary.some(k=>per100[k]!==null)&&has(perServing))){
   values={...perServing};unit='serving';base=1;basis=s.description;selected='_serving';
   if(amount&&has(per100))for(const k of KEYS)if(perServing[k]!==null&&per100[k]!==null){const expected=per100[k]*amount/100,tolerance=k==='cal'?Math.max(5,expected*.05):Math.max(.5,expected*.1);if(Math.abs(perServing[k]-expected)>tolerance)warnings.push('Per-serving and per-100 values disagree for '+NAMES[k]+'. Verify and correct the label values.')}
  }else if(has(per100)&&amount){
@@ -48,8 +48,9 @@ export function productFood(p){
  if(primaryAmount&&['pro','carb','fat'].every(k=>values[k]!==null)&&values.pro+values.carb+values.fat>primaryAmount*1.1)warnings.push('Reported macro mass exceeds the serving mass. Correct the database values from the package label.');
  if(values.cal!==null&&['pro','carb','fat'].every(k=>values[k]!==null)){const approximate=4*values.pro+4*values.carb+9*values.fat;if(approximate>0&&Math.abs(approximate-values.cal)>Math.max(30,approximate*.35))warnings.push('Calories and macros are substantially inconsistent. Verify the package label.');}
  if(standardUnit==='g'&&s.ml&&!s.grams)warnings.push('Standard nutrition is declared per 100 g but serving volume is in ml. No mass/volume equivalence was assumed.');
+ const packageInfo=packageFromProduct(p,s);if(packageInfo.warning)warnings.push(packageInfo.warning);
  const requiresReview=warnings.some(w=>/disagree|conflict|exceeds|inconsistent|only 1/.test(w));
- return {id:crypto.randomUUID(),name:String(p.product_name||p.product_name_en||'Unnamed product').slice(0,300),basis,base,unit,...values,source:'Open Food Facts',barcode:/^\d{8,14}$/.test(p.code||'')?p.code:'',serving:s,requiresUnitConfirmation:base===100&&!standardUnit,requiresReview,warnings:[...new Set(warnings)],nutritionSource:{declared,selected,multiplier,standardUnit,perServing,per100,servingDescription:String(p.serving_size||'').slice(0,300)}};
+ return {id:crypto.randomUUID(),name:String(p.product_name||p.product_name_en||'Unnamed product').slice(0,300),basis,base,unit,...values,source:'Open Food Facts',package:packageInfo.value,barcode:/^\d{8,14}$/.test(p.code||'')?p.code:'',serving:s,requiresUnitConfirmation:base===100&&!standardUnit,requiresReview,warnings:[...new Set(warnings)],nutritionSource:{declared,selected,multiplier,standardUnit,perServing,per100,servingDescription:String(p.serving_size||'').slice(0,300)}};
 }
 
 export function changeFoodUnit(food,to){
@@ -67,4 +68,32 @@ export function servingEquivalent(f){
  const servings=f.unit==='serving'?f.quantity:f.quantity/perUnit;
  const format=n=>Number(n.toFixed(3));
  return `${format(servings)} serving(s)`+(f.serving?.grams?` · ${format(servings*f.serving.grams)} g`:'')+(f.serving?.ml?` · ${format(servings*f.serving.ml)} ml`:'');
+}
+
+export function packageFromProduct(p,serving){
+ const units={g:['grams',1],kg:['grams',1000],ml:['ml',1],l:['ml',1000],cl:['ml',10]};
+ const value={grams:null,ml:null,servings:null};
+ const text=String(p.quantity||'').trim();
+ // Accept only a single explicit mass/volume. Multipacks and ambiguous text need manual label review.
+ const match=text.match(/^(\d+(?:[.,]\d+)?)\s*(kg|g|ml|cl|l)$/i);
+ if(match){const [key,factor]=units[match[2].toLowerCase()];value[key]=Number(match[1].replace(',','.'))*factor}
+ const typed=units[String(p.product_quantity_unit||'').toLowerCase()];
+ if(positive(p.product_quantity)&&typed){const [key,factor]=typed,amount=Number(p.product_quantity)*factor;
+  if((value.grams!==null&&key!=='grams')||(value.ml!==null&&key!=='ml')||(value[key]!==null&&Math.abs(value[key]-amount)>.01))return {value:null,warning:'Package quantities disagree. Entire-package logging is unavailable.'};
+  value[key]=amount;
+ }
+ if(positive(p.servings_per_container)&&/^\d+(?:\.\d+)?$/.test(String(p.servings_per_container)))value.servings=Number(p.servings_per_container);
+ if(Object.values(value).some(v=>v!==null&&(!positive(v)||v<.001||v>1e7)))return {value:null,warning:'Package quantity is outside supported limits. Entire-package logging is unavailable.'};
+ if(value.servings)for(const key of ['grams','ml'])if(serving[key]&&value[key]&&Math.abs(serving[key]*value.servings-value[key])>Math.max(.1,value[key]*.02))return {value:null,warning:'Package serving count and quantity disagree. Entire-package logging is unavailable.'};
+ return {value:Object.values(value).some(positive)?value:null,warning:null};
+}
+export function packageQuantity(f){
+ const p=f.package;if(!p||f.requiresUnitConfirmation||f.requiresReview)return null;
+ // Also guard imported metadata, which may not have passed through product parsing.
+ if(positive(p.servings))for(const key of ['grams','ml'])if(positive(p[key])&&positive(f.serving?.[key])&&Math.abs(p.servings*f.serving[key]-p[key])>Math.max(.1,p[key]*.02))return null;
+ if(f.unit==='g'&&positive(p.grams))return p.grams;
+ if(f.unit==='ml'&&positive(p.ml))return p.ml;
+ const count=positive(p.servings)?p.servings:positive(p.grams)&&positive(f.serving?.grams)?p.grams/f.serving.grams:positive(p.ml)&&positive(f.serving?.ml)?p.ml/f.serving.ml:null;
+ if(!positive(count))return null;
+ return f.unit==='serving'?count:f.unit==='g'&&positive(f.serving?.grams)?count*f.serving.grams:f.unit==='ml'&&positive(f.serving?.ml)?count*f.serving.ml:null;
 }

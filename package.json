@@ -1,1 +1,1 @@
-{"name":"calorieiq","private":true,"version":"2.1.0-dev.1","type":"module","scripts":{"test":"node --test tests/*.test.js","start":"node server.js"}}
+{"name":"calorieiq","private":true,"version":"2.2.0-dev.1","type":"module","scripts":{"test":"node --test tests/*.test.js","start":"node server.js"}}

@@ -13,7 +13,7 @@ const assert=require('node:assert/strict');
  assert.match(await page.locator('#calSummary').textContent(),/120 consumed/);assert.equal(await page.locator('#entries img').count(),0);
  await page.locator('#entries').getByRole('button',{name:'Edit',exact:true}).click();await page.locator('#quantity').fill('60');await page.locator('#submitFood').click();assert.match(await page.locator('#calSummary').textContent(),/240 consumed/);
  await page.locator('#entries').getByRole('button',{name:'Delete',exact:true}).click();await page.locator('#undo').click();assert.match(await page.locator('#calSummary').textContent(),/240 consumed/);
- await page.locator('#saveMeal').click();await page.getByRole('button',{name:'Library',exact:true}).click();await page.locator('#savedFoods').getByRole('button',{name:'Use',exact:true}).click();await page.locator('#quantity').fill('100');await page.locator('#addIngredient').click();await page.locator('#recipeName').fill('Yogurt recipe');await page.locator('#recipeYield').fill('4');await page.locator('#recipeForm button[type=submit], #recipeForm button:not([type])').click();assert.match(await page.locator('#recipes').textContent(),/Yogurt recipe/);
+ await page.locator('.diary-tools summary').click();await page.locator('#saveMeal').click();await page.getByRole('button',{name:'Library',exact:true}).click();await page.locator('#savedFoods').getByRole('button',{name:'Use',exact:true}).click();await page.locator('#quantity').fill('100');await page.locator('#addIngredient').click();await page.locator('#recipeName').fill('Yogurt recipe');await page.locator('#recipeYield').fill('4');await page.locator('#recipeForm button[type=submit], #recipeForm button:not([type])').click();assert.match(await page.locator('#recipes').textContent(),/Yogurt recipe/);
  await page.getByRole('button',{name:'Progress',exact:true}).click();await page.locator('#weight').fill('70');await page.locator('#weightForm button').click();assert.match(await page.locator('#weightSummary').textContent(),/70 kg/);
  await page.getByRole('button',{name:'Settings',exact:true}).click();await page.locator('#goal-cal').fill('1900');await page.locator('#goalForm button:not([type])').click();await page.locator('#profileName').fill('Family');await page.locator('#profileForm button').click();await page.getByRole('button',{name:'Diary',exact:true}).click();assert.match(await page.locator('#calSummary').textContent(),/0 consumed/);
  const profiles=await page.locator('#profile option').evaluateAll(os=>os.map(o=>o.value));await page.locator('#profile').selectOption(profiles[0]);assert.match(await page.locator('#calSummary').textContent(),/240 consumed \/ 1,?900/);
@@ -37,6 +37,7 @@ const assert=require('node:assert/strict');
  assert.deepEqual(errors,[]);console.log('Browser checks passed: diary, edit/delete/undo, XSS rendering, goals, recipes, meals, profiles, weight, invalid restore, export, mocked lookup, legacy migration, offline shell/scanner, mobile overflow.');
  await require('./reliability.cjs')(browser);
  await require('./servings.cjs')(browser);
+ await require('./v22.cjs')(browser);
  await require('./update.cjs')(browser);
  }finally{await browser.close()}
 })().catch(e=>{console.error(e);process.exitCode=1});

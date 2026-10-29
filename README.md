@@ -1,6 +1,6 @@
 # CalorieIQ
 
-A free, local-first calorie and macro diary for iPhone and desktop. No account,
+A free, local-first nutrition and weight diary for iPhone and desktop. No account,
 subscription, advertisements, or paid backend.
 
 **Development mode is enabled.** Each new ID/generation in `build-config.js`
@@ -10,13 +10,18 @@ for serving-size rules, real API findings, and reset details.
 
 ## Features
 
-- Daily diary with meal groups, edit, duplicate, delete/Undo and previous-day copy
-- Persistent calorie/macro goals plus optional daily overrides
+- Orange-and-blue daily dashboard, four meals, edit/duplicate/move/delete with Undo
+- Previous/next/today date controls, calendar and copying from any logged day
+- Quick-add calories with optional macros; favorites, recent and frequent food shortcuts
+- Persistent calorie/macro goals, optional nutrient targets and daily overrides
+- Daily/weekly nutrition, saturated fat, fiber, sugars, sodium, cholesterol and potassium
+- Optional adult maintenance-calorie estimate, applied only after reviewing/saving goals
 - Explicit serving/gram/milliliter quantities and incomplete-nutrition indicators
 - Open Food Facts name search and barcode lookup; recent/saved/custom foods
 - Local camera and photo barcode scanning, with supported torch and zoom
 - Recipe builder with ingredient snapshots and configurable servings
-- Reusable meal templates, weight records, weight and calorie trends
+- Reusable meal templates and package portions when quantities support conversion
+- Weight goals, start/current/change/remaining, 7/30/90-day trends and optional 7-day averages
 - Separate local family profiles and profile-specific goals/libraries
 - Validated JSON backup/restore, recovery snapshot and legacy-data migration
 - Offline app shell and scanner; responsive light/dark interface
@@ -40,10 +45,12 @@ queries sent to Open Food Facts. Camera images stay on the device. Export backup
 regularly; browser storage can be erased. Profiles do not sync between devices
 and do not provide password protection. Backups contain all profiles unencrypted.
 
-Existing version 1 diaries migrate automatically; the original storage key is
-retained. Never clear site data to install an update.
+Outside development resets, validated version 1 and version 2 backups remain supported.
+Development releases intentionally clear only CalorieIQ-owned test storage once per build.
+Never clear all browser/site data just to install an update.
 
 See [DEVELOPMENT.md](DEVELOPMENT.md) for architecture, verification, release
 procedure, known limitations and pending physical iPhone acceptance checks.
 
-No GitHub push or deployment is part of this local implementation.
+Published via the existing GitHub Pages configuration (`main`, repository root).
+See [V2.2-RELEASE.md](V2.2-RELEASE.md) for scope, tests and physical iPhone checks.
