@@ -1,6 +1,6 @@
 # CalorieIQ development notes
 
-Current local candidate: **2.5.0-dev.2**, generation **6**. See [V2.5-RELEASE.md](V2.5-RELEASE.md) for current features, verification and limitations. The original implementation notes below are historical.
+Current local candidate: **2.6.0-dev.1**, generation **7**. See [V2.6-RELEASE.md](V2.6-RELEASE.md) for current features, verification and limitations. The original implementation notes below are historical.
 
 ## Original 2.0 checkpoint
 

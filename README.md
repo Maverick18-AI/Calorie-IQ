@@ -23,7 +23,8 @@ for serving-size rules, real API findings, and reset details.
 - 13,588 real local USDA reference records, loaded on demand with source provenance
 - Exact/padded barcode lookup with latest saved corrections taking priority
 - Local camera and photo barcode scanning, with supported torch and zoom
-- Recipe builder with ingredient snapshots and configurable servings
+- Recipe builder with direct barcode scanning, search/custom ingredients, editable amounts and replacements
+- Live entire-recipe/per-serving nutrition, unknown nutrient handling and preserved ingredient snapshots
 - Reusable meal templates and package portions when quantities support conversion
 - Pounds by default, editable starting/current/goal weights, dated edits, 7/30/90-day and all-time interactive trends
 - Personal profile with feet/inches height, adult calorie estimates for lose/maintain/gain, and explicit manual targets
@@ -61,7 +62,7 @@ See [DEVELOPMENT.md](DEVELOPMENT.md) for architecture, verification, release
 procedure, known limitations and pending physical iPhone acceptance checks.
 
 Published via the existing GitHub Pages configuration (`main`, repository root).
-Version 2.5 is prepared for the authorized release through the existing Pages configuration.
-See [V2.5-RELEASE.md](V2.5-RELEASE.md) for release checks and remaining physical iPhone acceptance work.
+Version 2.6 is prepared for the authorized release through the existing Pages configuration.
+See [V2.6-RELEASE.md](V2.6-RELEASE.md) for release checks and remaining physical iPhone acceptance work.
 See [MULTISOURCE-REPORT.md](MULTISOURCE-REPORT.md) for source counts, verification and limitations,
 and [data/usda/README.md](data/usda/README.md) for reproducible imports. USDA Branded and CNF are not bundled.

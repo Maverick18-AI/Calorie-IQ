@@ -41,6 +41,7 @@ const assert=require('node:assert/strict');
  await require('./v23.cjs')(browser);
  await require('./multisource.cjs')(browser);
  await require('./v25.cjs')(browser);
+ await require('./recipes.cjs')(browser);
  await require('./update.cjs')(browser);
  await require('./cache-update.cjs')(browser);
  }finally{await browser.close()}
